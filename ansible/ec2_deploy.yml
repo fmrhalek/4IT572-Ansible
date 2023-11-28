@@ -9,12 +9,12 @@
         image_id: ami-0230bd60aa48260c6
         region: us-east-1
         key_name: devops
-        vpc_subnet_id: subnet-07218a5203cede9fc
+        vpc_subnet_id: subnet-089f1d2b912d5ed16
         network:
             assign_public_ip: yes
         wait: yes
         count: 1
-        security_group: eshop
+        security_group: myapp
         aws_access_key: "{{ access_key }}"
         aws_secret_key: "{{ secret_key }}"
         security_token: "{{ session_token }}"
@@ -66,12 +66,12 @@
         build:
           path: .
           dockerfile: apps/Dockerfile
-        name: myeshop
+        name: myapp
         tag: latest
         source: build
         become: yes
     - name: Run Docker with eshop
-      shell: docker container run -p 80:3000 myeshop
+      shell: docker container run -p 80:3000 myapp
       async: 45
       poll: 0
       become: yes
