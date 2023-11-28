@@ -61,17 +61,11 @@
       git:
         repo: 'https://github.com/fmrhalek/4IT572.git'
         dest: ./app
-    - name: Build an image and push it to a private repo
-      docker_image:
-        build:
-          path: .
-          dockerfile: apps/Dockerfile
-        name: myapp
-        tag: latest
-        source: build
-        become: yes
+    - name: Build docker with eshop
+      shell: cd app && docker build -t myapp:latest .
+      become: yes
     - name: Run Docker with eshop
-      shell: docker container run -p 80:3000 myapp
+      shell: docker run -p 80:3000 myapp
       async: 45
       poll: 0
       become: yes
