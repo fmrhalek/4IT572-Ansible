@@ -3,9 +3,21 @@
   connection: local
 
   tasks:
+    - name: Terminate every running instance
+      ec2_instance:
+        region: us-east-1
+        state: absent
+        filters:
+          instance-state-name: running
+          "tag:Name": "myapp"
+        aws_access_key: "{{ access_key }}"
+        aws_secret_key: "{{ secret_key }}"
+        security_token: "{{ session_token }}"
+
     - name: Launch EC2 instance
       ec2_instance:
-        instance_type: t2.micro
+        name: "myapp"
+        instance_type: t2.medium
         image_id: ami-0230bd60aa48260c6
         region: us-east-1
         key_name: test
@@ -15,6 +27,8 @@
         wait: yes
         count: 1
         security_group: myapp
+#        tags:
+#          Name: myapp
         aws_access_key: "{{ access_key }}"
         aws_secret_key: "{{ secret_key }}"
         security_token: "{{ session_token }}"
@@ -29,9 +43,25 @@
     - name: Wait for SSH connection
       delegate_to: "{{ item.public_dns_name }}"
       wait_for_connection:
-        delay: 30
-        timeout: 300
+        delay: 60
+        timeout: 600
       loop: "{{ ec2_instance_result.instances }}"
+
+    - name: Add EC2 instances as known hosts
+      shell: ssh-keyscan -H {{ item.public_ip_address }} >> ~/.ssh/known_hosts
+      with_items: "{{ ec2_instance_result.instances }}"
+
+    - name: Add instances to load balancer target group
+      elb_target:
+        target_group_name: eshop
+        target_id: "{{ item.instance_id }}"
+        target_port: 80
+        state: present
+        region: us-east-1
+        aws_access_key: "{{ access_key }}"
+        aws_secret_key: "{{ secret_key }}"
+        security_token: "{{ session_token }}"
+      with_items: "{{ ec2_instance_result.instances }}"
 
 - name: Configure EC2
   hosts: launched
